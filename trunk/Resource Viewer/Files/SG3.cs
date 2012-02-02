@@ -5,9 +5,9 @@ using System.Text;
 using System.Drawing;
 using System.IO;
 
-namespace OpenPharaoh
+namespace OpenPharaoh.Files
 {
-    public class Sg3
+    public class SG3
     {
         public const uint OFFSET_COUNTS_DATA = 0x50;
         public const uint OFFSET_FILES_DATA = 0x2A8;
@@ -43,18 +43,19 @@ namespace OpenPharaoh
             public uint Offset;
             public ushort Width;
             public ushort Height;
+            public Bitmap555Type Type;
+            public byte ExternalFlag;
 
             public Bitmap Bitmap;
 
-            public byte[] Unknown;
+            public byte[] Data;
         }
 
-        public Sg3()
+        public SG3()
         {
-
         }
 
-        public Sg3(string filename)
+        public SG3(string filename)
         {
             this.FilenameSG3 = filename;
             this.Filename555 = filename.Replace(".sg3", ".555");
@@ -105,22 +106,54 @@ namespace OpenPharaoh
 
                     for (ushort i = 0; i < MAX_BITMAPS; i++)
                     {
-                        var offset = b.ReadUInt32();
-                        var value1 = b.ReadUInt32();
-                        var value2 = b.ReadUInt32();
-                        var value3 = b.ReadUInt32();
-                        var value4 = b.ReadUInt32();
+                        //OFFSET  TYPE  DESCRIPTION
+                        //   0    uint  Offset into the .555 file. Of note: if it's an external .555 file,
+                        //              you have to subtract one from this offset!
+                        //   4    uint  Length of the image data (total)
+                        //   8    uint  Length of the compressed image data
+                        //  12    uint  (unknown, zero bytes)
+                        //  16    uint  Invert offset. For sprites (walkers), the image of the walker
+                        //              moving to the left is the mirrored version of the image of the
+                        //              walker going right. If this is set, copy the image at the index
+                        //              (current - invert offset) and mirror it vertically.
+                        //  20   ushort Width of the image
+                        //  22   ushort Height of the image
+                        //  24    byte* 6 unknown bytes. At least the first 4 bytes are 2 shorts
+                        //  30   ushort Number of frames per animation (ex. 12 frames in the 'Walking North' animation)
+                        //  32   ushort Number of animations (There is an animation of the walker walking north, south, etc...)
+                        //  34   short  animation offset
+                        //  36   short  animation offset
+                        //  38    byte* 12 unknown bytes.
+                        //  50   ushort Type of image. See below.
+                        //  52    byte  Flag: 0 = use internal .555, 1 = use external .555 (defined in bitmap)
+                        //  53    byte* 3 bytes, 3 unknown flags
+                        //  56    byte  Bitmap ID (not always filled in correctly for SG3 files)
+                        //  57    byte* 7 bytes, unknown
 
-                        var width = b.ReadUInt16();
-                        var height = b.ReadUInt16();
+                        //-- For sg3 files with alpha masks: --
+                        //  64    uint  Offset of alpha mask
+                        //  68    uint  Length of alpha mask data
 
-                        var value5 = b.ReadUInt16();
-                        var value6 = b.ReadUInt16();
-                        var value7 = b.ReadUInt32();
-                        var rest = b.ReadBytes(32);
+                        var offset = b.ReadUInt32();                        // 0
+                        var imageDataTotalLength = b.ReadUInt32();          // 4
+                        var imageDataCompressedLenght = b.ReadUInt32();     // 8
+                        var unknown12 = b.ReadUInt32();                     // 12
+                        var offsetInvert = b.ReadUInt32();                  // 16
+                        var width = b.ReadUInt16();                         // 20
+                        var height = b.ReadUInt16();                        // 22
+
+                        var unknown24 = b.ReadBytes(6);                     // 24
+                        var totalFramesPerAnimation = b.ReadUInt16();       // 30
+                        var totalAnimations = b.ReadUInt16();               // 32
+                        var unknown32 = b.ReadBytes(12 + 2 + 2);            // 34
+                        var type = b.ReadUInt16();                          // 50
+                        var externalFlag = b.ReadByte();                    // 52
+                        var unknown53 = b.ReadBytes(3);                     // 53
+                        var bitmapId = b.ReadByte();                        // 56
+                        var unknown57 = b.ReadBytes(7);                     // 57
 
                         f.Seek(-(8 * 4 + 32), SeekOrigin.Current);
-                        var unknown = b.ReadBytes(32 + 8 * 4);
+                        var data = b.ReadBytes(32 + 8 * 4);
 
                         if (i <= this.TotalBitmaps)
                         {
@@ -128,12 +161,14 @@ namespace OpenPharaoh
                             sg2Bitmap.Offset = offset;
                             sg2Bitmap.Width = width;
                             sg2Bitmap.Height = height;
-                            sg2Bitmap.Unknown = unknown;
+                            sg2Bitmap.Type = (Bitmap555Type)type;
+                            sg2Bitmap.ExternalFlag = externalFlag;
+                            sg2Bitmap.Data = data;
 
                             // bitmap is valid
                             if (width != 0 && height != 0)
                             {
-                                sg2Bitmap.Bitmap = FileHelper.LoadBitmapFrom555(this.Filename555, (int)width, (int)height, (int)offset);
+                                sg2Bitmap.Bitmap = Bitmap555.Load((Bitmap555Type)type, this.Filename555, width, height, offset);
                                 //sg2Bitmap.Bitmap.Save(@"C:\Users\bbdnet6039\Downloads\OpenPharaoh\Test\" + i.ToString() + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp);
                             }
 

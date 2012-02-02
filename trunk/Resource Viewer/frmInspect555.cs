@@ -10,6 +10,7 @@ using System.IO;
 using System.Drawing.Drawing2D;
 
 using OpenPharaoh;
+using OpenPharaoh.Files;
 
 namespace OpenPharaohResourceViewer
 {
@@ -66,8 +67,8 @@ namespace OpenPharaohResourceViewer
 
         private void TestSG2()
         {
-            var sg2 = new Sg3(@"C:\Users\bbdnet6039\Downloads\OpenPharaoh\Data\Pharaoh_General.sg3");
-            //var sg2 = new Sg3(@"C:\Users\bbdnet6039\Downloads\OpenPharaoh\Data\Expansion.sg3");
+            var sg2 = new SG3(@"C:\Users\bbdnet6039\Downloads\OpenPharaoh\Data\Pharaoh_General.sg3");
+            //var sg2 = new SG3(@"C:\Users\bbdnet6039\Downloads\OpenPharaoh\Data\Expansion.sg3");
         }
 
         private void Test555()
@@ -87,7 +88,7 @@ namespace OpenPharaohResourceViewer
             ////this.Width = 512;
             ////this.Height = 512;
 
-            var b = FileHelper.LoadBitmapFrom555Debug(@"C:\Users\bbdnet6039\Downloads\OpenPharaoh\Data\Expansion.555", 39, 24 * 5, 39218 - 39 * 2);
+            var b = Bitmap555.LoadPlainBitmap_Debug(@"C:\Users\bbdnet6039\Downloads\OpenPharaoh\Data\Expansion.555", 39, 24 * 5, 39218 - 39 * 2);
             this.pictureBox1.Image = b;
             this.Width = 512;
             this.Height = 512;
@@ -104,11 +105,11 @@ namespace OpenPharaohResourceViewer
             this.lblWidth.Text = this.tbWidth.Value.ToString() + "px";
             this.lblOffset.Text = string.Format("Offset: 0x{0:X8} [{0}]", this.scrollOffset.Value);
 
-            var width = this.tbWidth.Value;
-            var height = this.tbHeight.Value * (int)this.nudItemsCount.Value;
-            var offset = this.scrollOffset.Value;
+            var width = (ushort)this.tbWidth.Value;
+            var height = (ushort)(this.tbHeight.Value * (int)this.nudItemsCount.Value);
+            var offset = (uint)this.scrollOffset.Value;
 
-            var b = FileHelper.LoadBitmapFrom555Debug(this.Filename, width, height, offset);
+            var b = Bitmap555.LoadPlainBitmap_Debug(this.Filename, width, height, offset);
             this.pictureBox1.Image = b;
         }
 

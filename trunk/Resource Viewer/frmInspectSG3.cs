@@ -8,12 +8,13 @@ using System.Text;
 using System.Windows.Forms;
 
 using OpenPharaoh;
+using OpenPharaoh.Files;
 
 namespace OpenPharaohResourceViewer
 {
     public partial class frmInspectSG3 : Form
     {
-        public Sg3 File;
+        public SG3 File;
 
         public frmInspectSG3()
         {
@@ -35,14 +36,14 @@ namespace OpenPharaohResourceViewer
 
         private void LoadSG3(string filename)
         {
-            this.File = new Sg3(filename);
+            this.File = new SG3(filename);
 
             var root = new TreeNode("SG3", 0, 0);
 
             this.treeViewMain.Nodes.Clear();
             this.treeViewMain.Nodes.Add(root);
 
-            for (int i = 0; i < Sg3.MAX_SPRITES; i++)
+            for (int i = 0; i < SG3.MAX_SPRITES; i++)
             {
                 var name = this.File.SpriteNames[i];
                 var value = this.File.SpriteBitmapIndex[i];
@@ -58,7 +59,7 @@ namespace OpenPharaohResourceViewer
                 var startIndex = this.File.SpriteBitmapIndex[i];
                 var endIndex = (ushort)this.File.TotalBitmaps + 1;
 
-                for (ushort j = 0; j < Sg3.MAX_SPRITES; j++)
+                for (ushort j = 0; j < SG3.MAX_SPRITES; j++)
                 {
                     var index = this.File.SpriteBitmapIndex[j];
 
@@ -86,29 +87,34 @@ namespace OpenPharaohResourceViewer
             this.pictureBoxViewer.Image = null;
             this.labelView.Text = "";
 
-            if (e.Node != null && e.Node.Tag is OpenPharaoh.Sg3.Sg3Bitmap)
+            if (e.Node != null && e.Node.Tag is SG3.Sg3Bitmap)
             {
-                var b = ((OpenPharaoh.Sg3.Sg3Bitmap)e.Node.Tag);
+                var b = ((SG3.Sg3Bitmap)e.Node.Tag);
 
                 this.pictureBoxViewer.Image = b.Bitmap;
                 this.labelView.Text = string.Format(
                     "Offset: {1:X8}{0}" +
                     "Width:  0x{2:X4} [{2}]{0}" +
-                    "Height: 0x{3:X4} [{3}]{0}",
+                    "Height: 0x{3:X4} [{3}]{0}" +
+                    "Type:   0x{5:X2} [{4}]{0}" +
+                    "Is External: {6}",
                     System.Environment.NewLine,
                     b.Offset,
                     b.Width,
-                    b.Height);
+                    b.Height,
+                    b.Type,
+                    (int)b.Type,
+                    b.ExternalFlag == 1);
 
-                this.hexView.Add(b.Unknown);
+                this.hexView.Add(b.Data);
             }
         }
 
         private void treeViewMain_DoubleClick(object sender, EventArgs e)
         {
-            if (this.treeViewMain.SelectedNode.Tag is OpenPharaoh.Sg3.Sg3Bitmap)
+            if (this.treeViewMain.SelectedNode.Tag is SG3.Sg3Bitmap)
             {
-                var b = ((OpenPharaoh.Sg3.Sg3Bitmap)this.treeViewMain.SelectedNode.Tag);
+                var b = ((SG3.Sg3Bitmap)this.treeViewMain.SelectedNode.Tag);
 
                 var f = new frmInspect555();
 

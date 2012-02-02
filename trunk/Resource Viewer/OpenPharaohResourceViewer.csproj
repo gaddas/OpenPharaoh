@@ -56,7 +56,8 @@
     <Compile Include="ExtendedPictureBox.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="FileHelper.cs" />
+    <Compile Include="Files\555.cs" />
+    <Compile Include="Files\Bitmap555Type.cs" />
     <Compile Include="frmInspect555.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -95,10 +96,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="SG2.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Controls\" />
+    <Compile Include="Files\SG3.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
