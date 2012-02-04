@@ -90,11 +90,11 @@
             this.imageList1.Images.SetKeyName(2, "label_16x16.png");
             this.imageList1.Images.SetKeyName(3, "toolbar_get_info_16x16.png");
             this.imageList1.Images.SetKeyName(4, "picture_16x16.png");
+            this.imageList1.Images.SetKeyName(5, "bmp_16x16.png");
             // 
             // hexView
             // 
-            this.hexView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
+            this.hexView.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.hexView.AutoScroll = true;
             this.hexView.AutoSize = true;
@@ -116,9 +116,9 @@
             this.labelView.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.labelView.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.labelView.Location = new System.Drawing.Point(898, 198);
+            this.labelView.Location = new System.Drawing.Point(831, 198);
             this.labelView.Name = "labelView";
-            this.labelView.Size = new System.Drawing.Size(221, 270);
+            this.labelView.Size = new System.Drawing.Size(288, 270);
             this.labelView.TabIndex = 5;
             this.labelView.Text = "Bitmap Information:";
             // 
@@ -130,7 +130,7 @@
             this.pictureBoxViewer.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.pictureBoxViewer.Location = new System.Drawing.Point(286, 197);
             this.pictureBoxViewer.Name = "pictureBoxViewer";
-            this.pictureBoxViewer.Size = new System.Drawing.Size(606, 271);
+            this.pictureBoxViewer.Size = new System.Drawing.Size(539, 271);
             this.pictureBoxViewer.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBoxViewer.TabIndex = 3;
             this.pictureBoxViewer.TabStop = false;

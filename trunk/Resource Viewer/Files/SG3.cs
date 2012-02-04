@@ -26,7 +26,7 @@ namespace OpenPharaoh.Files
         public uint TotalFiles2 = 0;
         public uint FileSize555 = 0;
 
-        public Dictionary<string, Sg3File> Files = new Dictionary<string, Sg3File>();
+        public List<Sg3File> Files = new List<Sg3File>();
         public Dictionary<ushort, Sg3Bitmap> Bitmaps = new Dictionary<ushort, Sg3Bitmap>();
 
         public ushort[] SpriteBitmapIndex = new ushort[MAX_SPRITES];
@@ -36,17 +36,24 @@ namespace OpenPharaoh.Files
         {
             public string Filename;
             public string Description;
+            public uint FirstImage;
+            public uint LastImage;
+            public uint Count;
         }
 
         public class Sg3Bitmap
         {
             public uint Offset;
+            public uint DataLenghtTotal;
+            public uint DataLengthTiles;
             public ushort Width;
             public ushort Height;
             public Bitmap555Type Type;
             public byte ExternalFlag;
+            public byte TileSize;
 
-            public Bitmap Bitmap;
+            public Bitmap Plain;
+            public List<Bitmap> Tiles = new List<Bitmap>();
 
             public byte[] Data;
         }
@@ -58,12 +65,24 @@ namespace OpenPharaoh.Files
         public SG3(string filename)
         {
             this.FilenameSG3 = filename;
-            this.Filename555 = filename.Replace(".sg3", ".555");
+            this.Filename555 = Path.ChangeExtension(filename, ".555");
 
             using (var f = new FileStream(filename, FileMode.Open))
             {
                 using (var b = new BinaryReader(f))
                 {
+                    //OFFSET  TYPE  DESCRIPTION
+                    // 0    uint  For some SG's, the filesize, for others, it's a fixed value
+                    // 4    uint  Version number, always 0xd3 for C3's sg2 files
+                    // 8    uint  (unknown)
+                    //12    int   Maximum number of image records in this file
+                    //16    int   Number of image records in use
+                    //20    int   Number of bitmap records in use (maximum is 100 for SG2, 200 for SG3
+                    //24    int   Unknown: appears to be the number of bitmap records minus one
+                    //28    uint  Total filesize of all loaded graphics (.555 files)
+                    //32    uint  Filesize of the .555 file that "belongs" to this .sg2: the one with the same name
+                    //36    uint  Filesize of any images pulled from external .555 files
+
                     var header0x00 = b.ReadUInt32();        // 0x0000: 28 9B 0A 00
                     var header0x04 = b.ReadUInt32();        // 0x0004: D5 00 00 00
                     var header0x08 = b.ReadUInt32();        // 0x0008: it's some number
@@ -87,9 +106,25 @@ namespace OpenPharaoh.Files
 
                     for (int i = 0; i < MAX_FILES; i++)
                     {
-                        var cname = b.ReadChars(65);
-                        var cdescription = b.ReadChars(51);
-                        var data = b.ReadBytes(84);
+                        //OFFSET  TYPE    DESCRIPTION
+                        //  0    string  65 bytes, the filename of the .bmp file. This translates to the
+                        //               name of the .555 file, if it's external.
+                        // 65    string  51 bytes, comment for this bitmap record
+                        //116    int     Width of some image in the bitmap (don't pay much attention to this)
+                        //120    int     Height of some image in the bitmap (idem)
+                        //124    uint    Number of images in this bitmap
+                        //128    uint    Index of the first image of this bitmap
+                        //132    uint    Index of the last image of this bitmap
+                        //136    byte*   64 bytes, unkwnown
+
+                        var cname = b.ReadChars(65);                // 0
+                        var cdescription = b.ReadChars(51);         // 65
+                        var width = b.ReadUInt32();                 // 116
+                        var height = b.ReadUInt32();                // 120
+                        var imagesCount = b.ReadUInt32();           // 124
+                        var imagesFirst = b.ReadUInt32();           // 128
+                        var imagesLast = b.ReadUInt32();            // 132
+                        var data = b.ReadBytes(64);                 // 136
 
                         var name = new String(cname, 0, Array.IndexOf(cname, '\0'));
                         var description = new String(cdescription, 0, Array.IndexOf(cdescription, '\0'));
@@ -99,8 +134,11 @@ namespace OpenPharaoh.Files
                             var sg2File = new Sg3File();
                             sg2File.Description = description;
                             sg2File.Filename = name;
+                            sg2File.LastImage = imagesLast;
+                            sg2File.FirstImage = imagesFirst;
+                            sg2File.Count = imagesCount;
 
-                            this.Files.Add(name.Trim(), sg2File);
+                            this.Files.Add(sg2File);
                         }
                     }
 
@@ -110,7 +148,7 @@ namespace OpenPharaoh.Files
                         //   0    uint  Offset into the .555 file. Of note: if it's an external .555 file,
                         //              you have to subtract one from this offset!
                         //   4    uint  Length of the image data (total)
-                        //   8    uint  Length of the compressed image data
+                        //   8    uint  Length of the image data (tiles)
                         //  12    uint  (unknown, zero bytes)
                         //  16    uint  Invert offset. For sprites (walkers), the image of the walker
                         //              moving to the left is the mirrored version of the image of the
@@ -126,7 +164,8 @@ namespace OpenPharaoh.Files
                         //  38    byte* 12 unknown bytes.
                         //  50   ushort Type of image. See below.
                         //  52    byte  Flag: 0 = use internal .555, 1 = use external .555 (defined in bitmap)
-                        //  53    byte* 3 bytes, 3 unknown flags
+                        //  53    byte* 2 bytes, 2 unknown flags
+                        //  55    byte  Tile Size for isometric data
                         //  56    byte  Bitmap ID (not always filled in correctly for SG3 files)
                         //  57    byte* 7 bytes, unknown
 
@@ -136,7 +175,7 @@ namespace OpenPharaoh.Files
 
                         var offset = b.ReadUInt32();                        // 0
                         var imageDataTotalLength = b.ReadUInt32();          // 4
-                        var imageDataCompressedLenght = b.ReadUInt32();     // 8
+                        var imageDataTilesLenght = b.ReadUInt32();          // 8
                         var unknown12 = b.ReadUInt32();                     // 12
                         var offsetInvert = b.ReadUInt32();                  // 16
                         var width = b.ReadUInt16();                         // 20
@@ -148,7 +187,8 @@ namespace OpenPharaoh.Files
                         var unknown32 = b.ReadBytes(12 + 2 + 2);            // 34
                         var type = b.ReadUInt16();                          // 50
                         var externalFlag = b.ReadByte();                    // 52
-                        var unknown53 = b.ReadBytes(3);                     // 53
+                        var unknown53 = b.ReadBytes(2);                     // 53
+                        var tileSize = b.ReadByte();                        // 55
                         var bitmapId = b.ReadByte();                        // 56
                         var unknown57 = b.ReadBytes(7);                     // 57
 
@@ -159,17 +199,50 @@ namespace OpenPharaoh.Files
                         {
                             var sg2Bitmap = new Sg3Bitmap();
                             sg2Bitmap.Offset = offset;
+                            sg2Bitmap.DataLenghtTotal = imageDataTotalLength;
+                            sg2Bitmap.DataLengthTiles = imageDataTilesLenght;
                             sg2Bitmap.Width = width;
                             sg2Bitmap.Height = height;
                             sg2Bitmap.Type = (Bitmap555Type)type;
                             sg2Bitmap.ExternalFlag = externalFlag;
+                            sg2Bitmap.TileSize = tileSize;
+
                             sg2Bitmap.Data = data;
 
                             // bitmap is valid
                             if (width != 0 && height != 0)
                             {
-                                sg2Bitmap.Bitmap = Bitmap555.Load((Bitmap555Type)type, this.Filename555, width, height, offset);
-                                //sg2Bitmap.Bitmap.Save(@"C:\Users\bbdnet6039\Downloads\OpenPharaoh\Test\" + i.ToString() + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp);
+                                if (sg2Bitmap.Type == Bitmap555Type.Isometric)
+                                {
+                                    if (externalFlag != 0) throw new NotImplementedException("Not able to read external tile images");
+
+                                    for (uint tile = 0; tile < tileSize * tileSize; tile++)
+                                    {
+                                        var bitmap = Bitmap555.LoadIsometricBitmap(this.Filename555, width, height, offset + tile * Bitmap555.TILE_BYTES);
+                                        sg2Bitmap.Tiles.Add(bitmap);
+                                    }
+
+                                    if (imageDataTotalLength - imageDataTilesLenght > 0)
+                                    {
+                                        var poffset = offset + imageDataTilesLenght;
+                                        var plength = imageDataTotalLength - imageDataTilesLenght;
+                                        sg2Bitmap.Plain = Bitmap555.LoadPlainCompressedBitmap(this.Filename555, width, height, poffset, plength);
+                                    }
+                                }
+                                else
+                                {
+                                    if (externalFlag == 0)
+                                    {
+                                        sg2Bitmap.Plain = Bitmap555.Load((Bitmap555Type)type, this.Filename555, width, height, offset);
+                                    }
+                                    else
+                                    {
+                                        var file = this.Files.First(ff => ff.FirstImage <= i && ff.LastImage >= i);
+                                        var externalFilename = Path.ChangeExtension(Path.GetDirectoryName(filename) + "\\" + file.Filename, ".555");
+                                        sg2Bitmap.Plain = Bitmap555.Load((Bitmap555Type)type, externalFilename, width, height, offset - 1);
+                                    }
+                                }
+                                //sg2Bitmap.Plain.Save(@"C:\Users\bbdnet6039\Downloads\OpenPharaoh\Test\" + i.ToString() + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp);
                             }
 
                             this.Bitmaps.Add(i, sg2Bitmap);

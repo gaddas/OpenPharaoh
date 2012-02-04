@@ -60,6 +60,7 @@ namespace OpenPharaoh.Files
             }
 
             b.UnlockBits(bd);
+            b.MakeTransparent(Color.FromArgb(247, 0, 255));
             return b;
         }
 
@@ -159,16 +160,92 @@ namespace OpenPharaoh.Files
             }
 
             b.UnlockBits(bd);
+            b.MakeTransparent(Color.FromArgb(247, 0, 255));
             return b;
         }
 
+        public static Bitmap LoadPlainCompressedBitmap(string filename, ushort width, ushort height, uint offset, uint length)
+        {
+            var b = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format16bppRgb555);
+            var bd = b.LockBits(new Rectangle(0, 0, width, height), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format16bppRgb555);
+
+            int PixelSize = 2;
+
+            using (var f = new FileStream(filename, FileMode.Open))
+            {
+                f.Seek(offset, SeekOrigin.Begin);
+
+                unsafe
+                {
+                    uint position = 0;
+
+                    for (int y = 0; y < height; y++)
+                    {
+                        byte* row = (byte*)bd.Scan0 + (y * bd.Stride);
+
+                        var x = 0;
+                        while (x < width)
+                        {
+                            if (position >= length)
+                            {
+                                row[(x * PixelSize) + 0] = 0x1f;
+                                row[(x * PixelSize) + 1] = 0xf8;
+                                x++;
+                                continue;
+                            }
+
+                            var countPixel = (byte)f.ReadByte();
+                            position += 1;
+
+                            if (countPixel == 0xFF)
+                            {
+                                var countSkip = (byte)f.ReadByte();
+                                position += 1;
+
+                                for (int i = 0; i < countSkip; i++)
+                                {
+                                    // fill with 0xf81f /Magenta/
+                                    row[(x * PixelSize) + 0] = 0x1f;
+                                    row[(x * PixelSize) + 1] = 0xf8;
+
+                                    x++;
+                                }
+                            }
+                            else
+                            {
+                                for (int i = 0; i < countPixel; i++)
+                                {
+                                    var b1 = (byte)f.ReadByte();
+                                    var b2 = (byte)f.ReadByte();
+                                    position += 2;
+
+                                    row[(x * PixelSize) + 0] = b1;
+                                    row[(x * PixelSize) + 1] = b2;
+
+                                    x++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            b.UnlockBits(bd);
+            b.MakeTransparent(Color.FromArgb(247, 0, 255));
+            return b;
+        }
+
+        public static ushort TILE_WIDTH = 58;
+        public static ushort TILE_HEIGHT = 30;
+        public static uint TILE_BYTES = 1800;
+
         public static Bitmap LoadIsometricBitmap(string filename, ushort width, ushort height, uint offset)
         {
-            if (width % 2 != 0 || height % 2 != 0)
-            {
-                return null;
-                throw new NotImplementedException("Unable to load isometric bitmap with odd width or height.");
-            }
+            // no matter what are widht and height, the isometric tile is always:
+            // 1800 bytes, 58x30
+
+            width = TILE_WIDTH;
+            height = TILE_HEIGHT;
 
             var b = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format16bppRgb555);
             var bd = b.LockBits(new Rectangle(0, 0, width, height), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format16bppRgb555);
@@ -218,14 +295,18 @@ namespace OpenPharaoh.Files
                         }
                         else
                         {
-                            startX -= 2;
-                            endX += 2;
+                            if (startX != 0)
+                            {
+                                startX -= 2;
+                                endX += 2;
+                            }
                         }
                     }
                 }
             }
 
             b.UnlockBits(bd);
+            b.MakeTransparent(Color.FromArgb(247, 0, 255));
             return b;
         }
     }
