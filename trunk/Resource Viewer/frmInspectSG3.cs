@@ -25,7 +25,7 @@ namespace OpenPharaohResourceViewer
         {
             using (var ofd = new OpenFileDialog())
             {
-                ofd.Filter = "SG3 Files|*.SG3";
+                ofd.Filter = "SG3 Files|*.SG3|SG2 Files|*.SG2";
 
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
@@ -40,7 +40,7 @@ namespace OpenPharaohResourceViewer
 
             var root = new TreeNode("SG3", 0, 0);
             var rootS = new TreeNode("Sprites", 0, 0);
-            var rootSDescription = new TreeNode(string.Format("Total sprites: {0}", this.File.TotalBitmaps), 3, 3);
+            var rootSDescription = new TreeNode(string.Format("Total sprites: {0}", this.File.TotalImages), 3, 3);
 
             var rootB = new TreeNode("Bitmaps", 0, 0);
             var rootBDescription = new TreeNode(string.Format("Total bitmaps: {0}", this.File.TotalFiles1), 3, 3);
@@ -60,7 +60,7 @@ namespace OpenPharaohResourceViewer
             for (var s = 0; s < SG3.MAX_SPRITES; s++)
             {
                 var name = this.File.SpriteNames[s];
-                var value = this.File.SpriteBitmapIndex[s];
+                var value = this.File.SpriteImageIndex[s];
 
                 if (value == 0 && s != 0) break;
 
@@ -70,12 +70,12 @@ namespace OpenPharaohResourceViewer
                 nodeText.Nodes.Add(nodeIndex);
 
                 // load bitmaps
-                var startIndex = this.File.SpriteBitmapIndex[s];
-                var endIndex = (ushort)this.File.TotalBitmaps + 1;
+                var startIndex = this.File.SpriteImageIndex[s];
+                var endIndex = (ushort)this.File.TotalImages + 1;
 
                 for (ushort j = 0; j < SG3.MAX_SPRITES; j++)
                 {
-                    var index = this.File.SpriteBitmapIndex[j];
+                    var index = this.File.SpriteImageIndex[j];
 
                     if (index >= startIndex && index <= endIndex && j != s && index != 0)
                     {
@@ -86,7 +86,7 @@ namespace OpenPharaohResourceViewer
                 for (ushort j = startIndex; j < endIndex; j++)
                 {
                     var bitmapNode = new TreeNode(j.ToString(), 4, 4);
-                    bitmapNode.Tag = this.File.Bitmaps[j];
+                    bitmapNode.Tag = this.File.Images[j];
 
                     nodeText.Nodes.Add(bitmapNode);
                 }
@@ -108,7 +108,7 @@ namespace OpenPharaohResourceViewer
                 for (var j = fobject.FirstImage; j <= fobject.LastImage; j++)
                 {
                     var bitmapNode = new TreeNode(j.ToString(), 4, 4);
-                    bitmapNode.Tag = this.File.Bitmaps[(ushort)j];
+                    bitmapNode.Tag = this.File.Images[(ushort)j];
 
                     nodeBitmap.Nodes.Add(bitmapNode);
                 }
@@ -121,9 +121,9 @@ namespace OpenPharaohResourceViewer
             this.pictureBoxViewer.Image = null;
             this.labelView.Text = "";
 
-            if (e.Node != null && e.Node.Tag is SG3.Sg3Bitmap)
+            if (e.Node != null && e.Node.Tag is SG3.Sg3Image)
             {
-                var b = ((SG3.Sg3Bitmap)e.Node.Tag);
+                var b = ((SG3.Sg3Image)e.Node.Tag);
 
                 if (b.Type == Bitmap555Type.Isometric)
                 {

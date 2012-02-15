@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>HexControl</name>
+    </assembly>
+    <members>
+        <member name="F:HexControl.FindDialog.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:HexControl.FindDialog.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:HexControl.FindDialog.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:HexControl.HexControl">
+            http://msdn2.microsoft.com/en-us/library/tk67c2t8.aspx
+            <summary>
+            Summary description for UserControl1.
+            </summary>
+        </member>
+        <member name="M:HexControl.HexControl.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+        </member>
+        <member name="M:HexControl.HexControl.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify 
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="M:HexControl.HexControl.DrawHex(System.Drawing.Graphics,System.Int32@,System.Int32@,System.Int32@,System.Int32,System.Int32,System.Int32,HexControl.HexControl.Colors,System.Boolean@)">
+            <summary>
+            Draws a full line of hexadecimal values taking into account ranges.
+            </summary>
+            <param name="g">Graphics object to draw to.</param>
+            <param name="offset">Data offset to start drawing.</param>
+            <param name="asciiX">X position of char values to start</param>
+            <param name="x">X position to start drawing hex values</param>
+            <param name="y">Y position to start drawing hex values</param>
+            <param name="hexStrHeight"></param>
+            <param name="charWidth"></param>
+            <param name="newLine"></param>
+            <returns>true if finished drawing the whole control area, false otherwise.</returns>
+        </member>
+        <member name="M:HexControl.HexControl.FindRange(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Finds the first range that contains start and end offsets.
+            </summary>
+            <param name="start"></param>
+            <param name="length"></param>
+            <param name="pos"></param>
+            <returns></returns>
+        </member>
+        <member name="M:HexControl.HexControl.EnsureVisible(System.Int32)">
+            <summary>
+            Ensures a specific data offset is visible, i.e, is currently being showed in screen.
+            </summary>
+            <param name="dataOffset"></param>
+        </member>
+        <member name="M:HexControl.HexControl.GetDataBounds(System.Int32,System.Int32,System.Int32@,HexControl.HexControl.Colors@)">
+            <summary>
+            
+            </summary>
+            <param name="maxLen">Max data length</param>
+            <param name="start">Offset from (data beginning) to start drawing.</param>
+            <param name="end">One plus offset of last byte to draw.</param>
+            <param name="foreGround">Foreground color</param>
+            <param name="backGround">Background color</param>
+        </member>
+        <member name="F:HexControl.HexControl.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="T:HexControl.DataSelectionEventArgs">
+            <summary>
+            Argument for DataSelect event. 
+            </summary>
+        </member>
+        <member name="P:HexControl.DataSelectionEventArgs.Range">
+            <summary>
+            If a complete range (or some of its bytes) is selected this property will
+            return this range otherwise it will return null.
+            
+            Note that if selection data overlaps ranges this property will be null.
+            </summary>
+        </member>
+    </members>
+</doc>
