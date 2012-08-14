@@ -14,9 +14,9 @@ namespace OpenPharaoh.Files
         public const uint OFFSET_BITMAP_DATA = 0x9F28;
         public const uint OFFSET_SPRITE_DATA = 0xA62E8;
 
-        public const ushort MAX_SPRITES = 300;
-        public const ushort MAX_FILES = 200;
-        public const ushort MAX_IMAGES = 10000;
+        public static ushort MAX_SPRITES = 300;
+        public static ushort MAX_FILES = 200;
+        public static ushort MAX_IMAGES = 10000;
 
         public string FilenameSG3;
         public string Filename555;
@@ -66,6 +66,11 @@ namespace OpenPharaoh.Files
         {
             this.FilenameSG3 = filename;
             this.Filename555 = Path.ChangeExtension(filename, ".555");
+
+            if (Path.GetExtension(filename).ToUpper() == ".SG2")
+            {
+                MAX_FILES = 100;
+            }
 
             using (var f = new FileStream(filename, FileMode.Open))
             {
@@ -238,6 +243,12 @@ namespace OpenPharaoh.Files
                                     {
                                         var file = this.Files.First(ff => ff.FirstImage <= i && ff.LastImage >= i);
                                         var externalFilename = Path.ChangeExtension(Path.GetDirectoryName(filename) + "\\" + file.Filename, ".555");
+
+                                        if (!File.Exists(externalFilename))
+                                        {
+                                            externalFilename = Path.ChangeExtension(Path.GetDirectoryName(filename) + "\\555\\" + file.Filename, ".555");
+                                        }
+
                                         sg2Bitmap.Plain = Bitmap555.Load((Bitmap555Type)type, externalFilename, width, height, offset - 1);
                                     }
                                 }
