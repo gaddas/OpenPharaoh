@@ -1,0 +1,86 @@
+//--------------------------------------
+//--- 010 Editor v4.0.2 Binary Template
+//
+// File: LibMaina1.sg3
+// Author: Danail Dimitrov
+// Revision: 1
+// Purpose: Sierra Graphics v3
+//--------------------------------------
+
+LittleEndian();
+
+const uint32 OFFSET_COUNTS_DATA = 0x50;
+const uint32 OFFSET_FILES_DATA = 0x2A8;
+const uint32 OFFSET_BITMAP_DATA = 0x9F28;
+const uint32 OFFSET_SPRITE_DATA = 0xA62E8;
+
+const ushort MAX_SPRITES = 300;
+const ushort MAX_FILES = 200;
+const ushort MAX_IMAGES = 10000;
+
+struct FileData
+{
+    char Name[65];      // 65 bytes, the filename of the .bmp file. This translates to the name of the .555 file, if it's external.
+    char Comment[51];   // Comment for this bitmap record
+    uint Width;         // Width of some image in the bitmap (don't pay much attention to this)
+    uint Height;        // Height of some image in the bitmap (idem)
+    uint ImagesCount;   // Number of images in this bitmap
+    uint IndexFirst;    // Index of the first image of this bitmap
+    uint IndexLast;     // Index of the last image of this bitmap
+    byte Unknown[64];   // 64 bytes, unkwnown
+};
+
+struct ImageData
+{
+    uint Offset;        //Offset into the .555 file. Of note: if it's an external .555 file, you have to subtract one from this offset!
+    uint Length;        //Length of the image data (total)
+    uint TileLenght;    //Length of the image data (tiles)
+    uint Unknown;       //(unknown, zero bytes)
+    uint IsWalker;      //  Invert offset. For sprites (walkers), the image of the walker
+                        //  moving to the left is the mirrored version of the image of the
+                        //  walker going right. If this is set, copy the image at the index
+                        //  (current - invert offset) and mirror it vertically.
+    ushort Width;       //  Width of the image
+    ushort Height;      //  Height of the image
+    byte Unknown1[6];   //  unknown bytes. At least the first 4 bytes are 2 shorts
+    ushort Frames;      //  Number of frames per animation (ex. 12 frames in the 'Walking North' animation)
+    ushort Animations;  //  Number of animations (There is an animation of the walker walking north, south, etc...)
+    uint AnimationOffset;     // animation offset
+    byte Unknown2[12];  // 12 unknown bytes.
+    ushort Type;        // Type of image. See below.
+    byte IsExternal;    // Flag: 0 = use internal .555, 1 = use external .555 (defined in bitmap)
+    byte Flags[2];      // 2 bytes, 2 unknown flags
+    byte TileSize;      // Tile Size for isometric data
+    byte BitmapID;      //  Bitmap ID (not always filled in correctly for SG3 files)
+    byte Unknown3[7];   // 7 bytes, unknown
+
+    //-- For sg3 files with alpha masks: --
+    //uint AlphaMaskOffset;   // Offset of alpha mask
+    //uint AlphaMaskLength;   // Length of alpha mask data
+};
+
+struct SpriteData
+{
+    char    Name[48];
+};
+
+struct Header
+{
+    uint32   Size;                 // The file size
+    uint32   Version;              // Version number, 0xD3 for Caesar3
+    uint32   Unknown1;
+    uint32   ImagesMaximum;        // Maximum number of image records in this file
+    uint32   ImagesCount;          // Number of image records in use
+    uint32   TotalFiles;           // Number of bitmap records in use (maximum is 100 for SG2, 200 for SG3
+    uint32   TotalUserFiles;    
+    uint32   SizeAll;              // Total filesize of all loaded 555 files
+    uint32   SizeThis;             // *.555 file's size - 4
+    uint32   SizeExternal;         // Total filesize of all external 555 files
+    byte     Unknown2[40];
+    uint16   SpriteImageIndex[MAX_SPRITES];
+    FileData    Files[MAX_FILES];
+    ImageData   Images[ImagesMaximum];
+    SpriteData  Sprites[MAX_SPRITES];
+};
+
+Header header;
